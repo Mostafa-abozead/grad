@@ -1,0 +1,67 @@
+@startuml
+!theme plain
+skinparam backgroundColor #F7F9FC
+skinparam shadowing true
+skinparam defaultTextAlignment center
+skinparam linetype ortho
+skinparam roundcorner 18
+skinparam ArrowColor #455A64
+skinparam ArrowThickness 1.4
+skinparam rectangle {
+  BorderColor #546E7A
+  BackgroundColor #FFFFFF
+}
+skinparam packageStyle rectangle
+skinparam packageBorderColor #90A4AE
+skinparam packageBackgroundColor #FFFFFF
+skinparam packageBorderThickness 1.2
+skinparam note {
+  BackgroundColor #FFF8E1
+  BorderColor #FFB300
+}
+
+title Edge AI High-Level Architecture
+
+package "<b>Camera Layer</b>\nRTSP / IP Cameras" as CAM {
+  rectangle "Camera 1" as CAM1 #FFFFFF
+  rectangle "Camera 2" as CAM2 #FFFFFF
+  rectangle "Camera Group N" as CAMN #FFFFFF
+}
+
+package "<b>Edge Layer</b>\nSmall Server Near Cameras" as EDGE {
+  rectangle "Stream Ingestion\nDecode + Sample + Buffer" as INGEST #FFFFFF
+  rectangle "Shared Inference\nYOLO + ByteTrack" as INFER #FFFFFF
+  rectangle "Rules Engine\nZones + Schedules + Thresholds" as RULES #FFFFFF
+  rectangle "Event Generator\nCanonical JSON" as EVENT #FFFFFF
+  rectangle "Local Queue\nOffline Buffer + Retry" as QUEUE #FFFFFF
+  rectangle "Local Alerting\nWebSocket / Siren / SMS" as ALERT #FFFFFF
+}
+
+package "<b>Cloud / Central Server</b>" as CLOUD {
+  rectangle "Event Ingestion API" as API #FFFFFF
+  rectangle "Event Store + Analytics" as STORE #FFFFFF
+  rectangle "Risk Dashboard" as DASH #FFFFFF
+  rectangle "Agentic AI Layer\nRAG + LLM" as AGENT #FFFFFF
+  rectangle "Model Registry + Monitoring" as REG #FFFFFF
+}
+
+CAM1 --> INGEST : RTSP video
+CAM2 --> INGEST : RTSP video
+CAMN --> INGEST : RTSP video
+
+INGEST --> INFER : frames
+INFER --> RULES : detections + tracks
+RULES --> EVENT : safety events
+EVENT --> QUEUE : event JSON
+EVENT --> ALERT : critical alert
+QUEUE --> API : sync when online
+API --> STORE : persisted events
+STORE --> DASH : analytics + reports
+STORE --> AGENT : event context
+REG --> INFER : model version + rollout
+
+note right of EDGE
+<b>Design rule</b>\nCritical safety decisions stay local.\nCloud receives structured events,\nnot raw high-volume video.
+end note
+
+@enduml

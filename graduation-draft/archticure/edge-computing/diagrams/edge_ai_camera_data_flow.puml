@@ -1,0 +1,57 @@
+@startuml
+!theme plain
+skinparam backgroundColor #F7F9FC
+skinparam shadowing true
+skinparam defaultTextAlignment center
+skinparam linetype ortho
+skinparam roundcorner 18
+skinparam ArrowColor #455A64
+skinparam ArrowThickness 1.4
+skinparam packageBorderColor #90A4AE
+skinparam packageBackgroundColor #FFFFFF
+skinparam packageBorderThickness 1.2
+skinparam noteBackgroundColor #FFF8E1
+skinparam noteBorderColor #FFB300
+
+title Camera -> Edge -> Cloud Data Flow
+
+package "<b>Camera Layer</b>" as CAM_LAYER {
+  rectangle "RTSP Video Stream" as VIDEO #FFFFFF
+  rectangle "Camera Metadata\nID, Location, Zone" as META #FFFFFF
+}
+
+package "<b>Edge Device / Small Server</b>" as EDGE_LAYER {
+  rectangle "Decode + Sample Frames" as DECODE #FFFFFF
+  rectangle "Run Models\nYOLO, PPE, Fire/Smoke, Proximity" as MODELS #FFFFFF
+  rectangle "Track Objects\nByteTrack" as TRACK #FFFFFF
+  rectangle "Apply Rules\nZones, schedules, thresholds" as RULES #FFFFFF
+  rectangle "Create Events\nJSON alerts, counts, snapshots" as EVENTS #FFFFFF
+  rectangle "Local Queue\nOffline Buffer" as QUEUE #FFFFFF
+}
+
+package "<b>Cloud / Central Server</b>" as CLOUD_LAYER {
+  rectangle "Store Events" as STORE #FFFFFF
+  rectangle "Dashboards + Reports" as DASH #FFFFFF
+  rectangle "Agentic AI Chatbot" as CHAT #FFFFFF
+  rectangle "Model Registry + Monitoring" as REG #FFFFFF
+}
+
+VIDEO --> DECODE : frames
+META --> DECODE : context
+DECODE --> MODELS : sampled frames
+MODELS --> TRACK : detections
+TRACK --> RULES : tracks + classes
+RULES --> EVENTS : safety events
+EVENTS --> QUEUE : structured JSON
+QUEUE --> STORE : sync when online
+STORE --> DASH : analytics and KPIs
+STORE --> CHAT : event context for Q&A
+REG --> MODELS : model version and rollout
+
+note right of EVENTS
+<b>Shared upward data</b>\n- events\n- counts\n- snapshots\n- alerts
+
+Raw video stays mostly local.
+end note
+
+@enduml

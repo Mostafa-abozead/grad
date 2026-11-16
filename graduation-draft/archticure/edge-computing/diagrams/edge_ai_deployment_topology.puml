@@ -1,0 +1,87 @@
+@startuml
+!theme plain
+skinparam backgroundColor #F7F9FC
+skinparam shadowing true
+skinparam linetype ortho
+skinparam roundcorner 18
+skinparam ArrowColor #455A64
+skinparam ArrowThickness 1.4
+skinparam componentStyle rectangle
+skinparam packageBorderColor #90A4AE
+skinparam packageBackgroundColor #FFFFFF
+skinparam packageBorderThickness 1.2
+skinparam nodeBorderColor #546E7A
+skinparam nodeBackgroundColor #FFFFFF
+skinparam databaseBorderColor #546E7A
+skinparam databaseBackgroundColor #FFFFFF
+skinparam noteBackgroundColor #FFF8E1
+skinparam noteBorderColor #FFB300
+
+title Edge AI Deployment Topology
+
+package "<b>Factory Site</b>" as SITE {
+  node "Camera Zone A" as ZA {
+    component "Cam A1" as A1 #FFFFFF
+    component "Cam A2" as A2 #FFFFFF
+  }
+
+  node "Camera Zone B" as ZB {
+    component "Cam B1" as B1 #FFFFFF
+    component "Cam B2" as B2 #FFFFFF
+  }
+
+  node "<b>Edge Server 1</b>" as EGW1 {
+    component "Stream Ingestion" as S1 #FFFFFF
+    component "Inference\n(YOLO + Tracker)" as S2 #FFFFFF
+    component "Rules Service" as S3 #FFFFFF
+    database "Local Event Queue" as Q1 #FFFFFF
+  }
+
+  node "<b>Edge Server 2</b>" as EGW2 {
+    component "Stream Ingestion" as S4 #FFFFFF
+    component "Inference\n(YOLO + Tracker)" as S5 #FFFFFF
+    component "Rules Service" as S6 #FFFFFF
+    database "Local Event Queue" as Q2 #FFFFFF
+  }
+
+  node "Ops Console" as OPS {
+    component "Local Monitoring UI" as UI1 #FFFFFF
+  }
+}
+
+cloud "<b>Cloud / Central Server</b>" as CLOUD {
+  component "Event Ingestion API" as C1 #FFFFFF
+  database "Event Warehouse" as C2 #FFFFFF
+  component "Analytics + Risk Dashboard" as C3 #FFFFFF
+  component "Chatbot Backend\n(RAG + LLM)" as C4 #FFFFFF
+  component "Model Registry + Monitoring" as C5 #FFFFFF
+}
+
+A1 --> S1
+A2 --> S1
+B1 --> S4
+B2 --> S4
+
+S1 --> S2
+S2 --> S3
+S3 --> Q1
+
+S4 --> S5
+S5 --> S6
+S6 --> Q2
+
+Q1 --> C1 : sync when online
+Q2 --> C1 : sync when online
+C1 --> C2
+C2 --> C3
+C2 --> C4
+C5 --> S2 : model updates
+C5 --> S5 : model updates
+
+UI1 --> C3 : optional local view
+
+note bottom of EGW1
+<b>Edge-first operations</b>\n- low-latency alerting\n- outage tolerance\n- reduced bandwidth
+end note
+
+@enduml
